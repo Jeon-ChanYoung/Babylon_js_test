@@ -11,10 +11,10 @@ interface Placement {
     scale: number;
 }
 
-const SCALE = 10;
+const SCALE = 8;
 
 const PLACEMENTS: Placement[] = [
-    { x: 35, y: 8, z: 32, rotY: Math.PI, scale: SCALE },
+    { x: 37, y: 7, z: 32, rotY: Math.PI, scale: SCALE },
 ]
 
 export async function createboards(scene: Scene, shadowGen: ShadowGenerator): Promise<void> {

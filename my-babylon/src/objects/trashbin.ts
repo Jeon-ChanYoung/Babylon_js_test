@@ -8,10 +8,10 @@ interface Placement {
     scale: number;
 }
 
-const SCALE = 7;
+const SCALE = 5;
 
 const PLACEMENTS: Placement[] = [
-    { x: 39, z:  30, rotY: Math.PI, scale: SCALE },
+    { x: 41, z:  30, rotY: Math.PI, scale: SCALE },
 ]
 
 export async function createTrashbins(scene: Scene, shadowGen: ShadowGenerator): Promise<void> {

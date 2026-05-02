@@ -8,7 +8,7 @@ interface Placement {
     scale: number;
 }
 
-const SCALE = 10;
+const SCALE = 8;
 
 const PLACEMENTS: Placement[] = [
     { x: 46, z:  30, rotY: Math.PI, scale: SCALE },

@@ -16,6 +16,7 @@ import { createChalkboards } from "./objects/chalkboard";
 import { createTrashbins } from "./objects/trashbin";
 import { createChairfoldeds } from "./objects/chairfolded";
 import { createboards } from "./objects/board";
+import { createTables } from "./objects/table";
 
 DracoCompression.Configuration.decoder = {
     wasmUrl: "https://cdn.babylonjs.com/draco_wasm_wrapper_gltf.js",
@@ -30,26 +31,24 @@ const camera = createCamera(scene, canvas);
 
 const { shadowGen } = createLighting(scene);
 
-// 동기: 방 즉시 생성
 createRoom(scene, shadowGen);
 createPipeline(scene, camera);
 
-// 렌더 루프 먼저 시작
 engine.runRenderLoop(() => scene.render());
 window.addEventListener("resize", () => engine.resize());
 
-// 비동기: 오브젝트 병렬 로드
 (async () => {
     console.time("load");
 
     await Promise.all([
-        createChairs(scene, shadowGen),
-        createChairfoldeds(scene, shadowGen),
-        createCabinets(scene, shadowGen),
-        createChalkboards(scene, shadowGen),
+        // createChairs(scene, shadowGen),
+        // createChairfoldeds(scene, shadowGen),
+        // createCabinets(scene, shadowGen),
+        // createChalkboards(scene, shadowGen),
         createboards(scene, shadowGen),
         createTrashbins(scene, shadowGen),
         createWaterfilters(scene, shadowGen),
+        createTables(scene, shadowGen),
     ]);
 
     console.timeEnd("load");
