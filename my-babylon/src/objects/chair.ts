@@ -1,9 +1,11 @@
+// objects/chair.ts
+
 import {
-  Scene,
-  Vector3,
-  ShadowGenerator,
-  SceneLoader,
-  Mesh,
+    Scene,
+    Vector3,
+    ShadowGenerator,
+    SceneLoader,
+    Mesh,
 } from "@babylonjs/core";
 import "@babylonjs/loaders/glTF";
 

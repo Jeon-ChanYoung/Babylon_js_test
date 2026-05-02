@@ -2,6 +2,7 @@
 
 import "./style.css";
 import "@babylonjs/core/Lights/Shadows/shadowGeneratorSceneComponent";
+import { DracoCompression } from "@babylonjs/core/Meshes/Compression/dracoCompression";
 
 import { createEngine, createScene } from "./core/engine";
 import { createCamera } from "./core/camera";
@@ -13,21 +14,34 @@ import { createCabinets } from "./objects/cabinet";
 import { createWaterfilters } from "./objects/waterfilter";
 import { createChalkboards } from "./objects/chalkboard";
 import { createTrashbins } from "./objects/trashbin";
-import { createChairfoldeds } from "./objects/chairfoled";
+import { createChairfoldeds } from "./objects/chairfolded";
 import { createboards } from "./objects/board";
 
+DracoCompression.Configuration.decoder = {
+    wasmUrl: "https://cdn.babylonjs.com/draco_wasm_wrapper_gltf.js",
+    wasmBinaryUrl: "https://cdn.babylonjs.com/draco_decoder_gltf.wasm",
+    fallbackUrl: "https://cdn.babylonjs.com/draco_decoder_gltf.js",
+};
 
-// ✅ 개선: 명시적 병렬 로딩
-async function init() {
-    const canvas = document.getElementById("renderCanvas") as HTMLCanvasElement;
-    const engine = createEngine(canvas);
-    const scene  = createScene(engine);
-    const camera = createCamera(scene, canvas);
-    const { shadowGen } = createLighting(scene);
-    createRoom(scene, shadowGen),
-    engine.runRenderLoop(() => scene.render());
+const canvas = document.getElementById("renderCanvas") as HTMLCanvasElement;
+const engine = createEngine(canvas);
+const scene  = createScene(engine);
+const camera = createCamera(scene, canvas);
 
-    // 모든 모델을 동시에 로딩
+const { shadowGen } = createLighting(scene);
+
+// 동기: 방 즉시 생성
+createRoom(scene, shadowGen);
+createPipeline(scene, camera);
+
+// 렌더 루프 먼저 시작
+engine.runRenderLoop(() => scene.render());
+window.addEventListener("resize", () => engine.resize());
+
+// 비동기: 오브젝트 병렬 로드
+(async () => {
+    console.time("load");
+
     await Promise.all([
         createChairs(scene, shadowGen),
         createChairfoldeds(scene, shadowGen),
@@ -38,9 +52,5 @@ async function init() {
         createWaterfilters(scene, shadowGen),
     ]);
 
-    createPipeline(scene, camera);
-
-    window.addEventListener("resize", () => engine.resize());
-}
-
-init();
+    console.timeEnd("load");
+})();
