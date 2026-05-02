@@ -17,7 +17,7 @@ import wallTexturePath from "/src/assets/wall/albedo.png"
 
 const ROOM_WIDTH  = 100;  
 const ROOM_DEPTH  = 65;  
-const WALL_HEIGHT = 15;  
+const WALL_HEIGHT = 14;  
 const WALL_THICK  = 1; 
 const WALL_TILE_DENSITY = 0.1; 
 

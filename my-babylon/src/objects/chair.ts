@@ -6,6 +6,7 @@ import {
     ShadowGenerator,
     SceneLoader,
     Mesh,
+    TransformNode,
 } from "@babylonjs/core";
 import "@babylonjs/loaders/glTF";
 
@@ -36,31 +37,33 @@ const PLACEMENTS: Placement[] = [
 
     // 오른쪽 하단 단독
     { x:  47, z: -30, rotY: -Math.PI * 0.5, scale: SCALE },
+
+    { x:  28, z: 26, rotY: 0, scale: SCALE },
 ];
+const cache: Record<string, Mesh> = ((window as any).__tmplCache ??= {});
+
 
 export async function createChairs(scene: Scene, shadowGen: ShadowGenerator): Promise<void> {
-    const container = await SceneLoader.LoadAssetContainerAsync(
-        "/src/assets/3D/",
-        "chair.glb",
-        scene
-    );
+    if (!cache.chair || cache.chair.isDisposed()) {
+        const result = await SceneLoader.ImportMeshAsync("", "/src/assets/3D/", "chair.glb", scene);
+        cache.chair = result.meshes[0] as Mesh;
+        cache.chair.setEnabled(false);
+    }
 
-    // 원본 메시들을 scene에 추가하지 않고 보관
-    const rootMesh = container.meshes[0] as Mesh;
-    const childMeshes = container.meshes.slice(1) as Mesh[];
+    const root = cache.chair;
+    const children = root.getChildMeshes() as Mesh[];
 
     PLACEMENTS.forEach((cfg, i) => {
-        // 빈 부모 노드 생성
-        const parent = new Mesh(`chair_${i}`, scene);
+        const parent = new TransformNode(`chair_${i}`, scene);
         parent.position = new Vector3(cfg.x, 0, cfg.z);
         parent.rotation = new Vector3(0, cfg.rotY, 0);
         parent.scaling  = new Vector3(cfg.scale, cfg.scale, cfg.scale);
+        parent.metadata = { hmr: true };
 
-        // 각 서브메시를 인스턴싱
-        childMeshes.forEach((child) => {
+        children.forEach((child) => {
             if (child.geometry) {
-                const instance = child.createInstance(`${child.name}_${i}`);
-                instance.parent = parent;
+                const inst = child.createInstance(`${child.name}_${i}`);
+                inst.parent = parent;
             }
         });
     });

@@ -1,4 +1,4 @@
-// object/board.ts
+// object/extinguisher.ts
 
 import { Mesh, SceneLoader, Vector3, Scene, ShadowGenerator } from "@babylonjs/core";
 import "@babylonjs/loaders/glTF";
@@ -11,25 +11,25 @@ interface Placement {
     scale: number;
 }
 
-const SCALE = 7;
+const SCALE = 8;
 
 const PLACEMENTS: Placement[] = [
-    { x: 38, y: 8, z: 32, rotY: Math.PI, scale: SCALE },
+    { x: 23, y: 3, z: 32, rotY: Math.PI, scale: SCALE },
 ];
 const cache: Record<string, Mesh> = ((window as any).__tmplCache ??= {});
 
 
-export async function createboards(scene: Scene, shadowGen: ShadowGenerator): Promise<void> {
-    if (!cache.board || cache.board.isDisposed()) {
-        const result = await SceneLoader.ImportMeshAsync("", "/src/assets/3D/", "board.glb", scene);
-        cache.board = result.meshes[0] as Mesh;
-        cache.board.setEnabled(false);
+export async function createExtinguishers(scene: Scene, shadowGen: ShadowGenerator): Promise<void> {
+    if (!cache.extinguisher || cache.extinguisher.isDisposed()) {
+        const result = await SceneLoader.ImportMeshAsync("", "/src/assets/3D/", "extinguisher.glb", scene);
+        cache.extinguisher = result.meshes[0] as Mesh;
+        cache.extinguisher.setEnabled(false);
     }
 
-    const root = cache.board;
+    const root = cache.extinguisher;
 
     PLACEMENTS.forEach((cfg, i) => {
-        const clone = root.clone(`board_${i}`, null)!;
+        const clone = root.clone(`extinguisher_${i}`, null)!;
         clone.setEnabled(true);
         clone.metadata = { hmr: true }; 
 

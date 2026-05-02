@@ -8,33 +8,30 @@ interface Placement {
     scale: number;
 }
 
-const SCALE = 5;
+const SCALE = 6;
 
 const PLACEMENTS: Placement[] = [
     { x: 41, z:  30, rotY: Math.PI, scale: SCALE },
-]
+];
+const cache: Record<string, Mesh> = ((window as any).__tmplCache ??= {});
+
 
 export async function createTrashbins(scene: Scene, shadowGen: ShadowGenerator): Promise<void> {
-    const container = await SceneLoader.LoadAssetContainerAsync(
-        "/src/assets/3D/",
-        "trashbin.glb",
-        scene
-    );
+    if (!cache.trashbin || cache.trashbin.isDisposed()) {
+        const result = await SceneLoader.ImportMeshAsync("", "/src/assets/3D/", "trashbin.glb", scene);
+        cache.trashbin = result.meshes[0] as Mesh;
+        cache.trashbin.setEnabled(false);
+    }
 
-    const rootMesh = container.meshes[0] as Mesh;
-    const childMeshes = container.meshes.slice(1) as Mesh[];
+    const root = cache.trashbin;
 
     PLACEMENTS.forEach((cfg, i) => {
-        const parent = new Mesh(`trashbin_${i}`, scene);
-        parent.position = new Vector3(cfg.x, 0, cfg.z);
-        parent.rotation = new Vector3(0, cfg.rotY, 0);
-        parent.scaling  = new Vector3(cfg.scale, cfg.scale, cfg.scale);
+        const clone = root.clone(`trashbin_${i}`, null)!;
+        clone.setEnabled(true);
+        clone.metadata = { hmr: true }; 
 
-        childMeshes.forEach((child) => {
-            if (child.geometry) {
-                const instance = child.createInstance(`${child.name}_${i}`);
-                instance.parent = parent;
-            }
-        });
+        clone.position = new Vector3(cfg.x, 0, cfg.z);
+        clone.rotation = new Vector3(0, cfg.rotY, 0);
+        clone.scaling  = new Vector3(cfg.scale, cfg.scale, cfg.scale);
     });
 }

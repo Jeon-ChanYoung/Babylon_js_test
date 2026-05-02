@@ -12,31 +12,27 @@ interface Placement {
 const SCALE = 30;
 
 const PLACEMENTS: Placement[] = [
-    { x: -4, y: 6, z: 32, rotY: Math.PI, scale: SCALE },
-]
+    { x: -4, y: 4, z: 32, rotY: Math.PI, scale: SCALE },
+];
+const cache: Record<string, Mesh> = ((window as any).__tmplCache ??= {});
+
 
 export async function createChalkboards(scene: Scene, shadowGen: ShadowGenerator): Promise<void> {
-    const container = await SceneLoader.LoadAssetContainerAsync(
-        "/src/assets/3D/",
-        "chalkboard.glb",
-        scene
-    );
+    if (!cache.chalkboard || cache.chalkboard.isDisposed()) {
+        const result = await SceneLoader.ImportMeshAsync("", "/src/assets/3D/", "chalkboard.glb", scene);
+        cache.chalkboard = result.meshes[0] as Mesh;
+        cache.chalkboard.setEnabled(false);
+    }
 
-    const rootMesh = container.meshes[0] as Mesh;
-    const childMeshes = container.meshes.slice(1) as Mesh[];
+    const root = cache.chalkboard;
 
     PLACEMENTS.forEach((cfg, i) => {
-        const parent = new Mesh(`chalkboard_${i}`, scene);
-        parent.position = new Vector3(cfg.x, cfg.y, cfg.z);
-        parent.rotation = new Vector3(0, cfg.rotY, 0);
-        parent.scaling  = new Vector3(-cfg.scale, cfg.scale, cfg.scale);
+        const clone = root.clone(`chalkboard_${i}`, null)!;
+        clone.setEnabled(true);
+        clone.metadata = { hmr: true }; 
 
-        // 각 서브메시를 인스턴싱
-        childMeshes.forEach((child) => {
-            if (child.geometry) {
-                const instance = child.createInstance(`${child.name}_${i}`);
-                instance.parent = parent;
-            }
-        });
+        clone.position = new Vector3(cfg.x, cfg.y, cfg.z);
+        clone.rotation = new Vector3(0, cfg.rotY, 0);
+        clone.scaling  = new Vector3(-cfg.scale, cfg.scale, cfg.scale);
     });
 }

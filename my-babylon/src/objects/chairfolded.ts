@@ -21,28 +21,24 @@ const SCALE = 6;
 const PLACEMENTS: Placement[] = [
     { x: -33.5,  z:   30, rotX: -Math.PI / 12, rotY:  Math.PI,       scale: SCALE },
 ];
+const cache: Record<string, Mesh> = ((window as any).__tmplCache ??= {});
+
 
 export async function createChairfoldeds(scene: Scene, shadowGen: ShadowGenerator): Promise<void> {
-    const container = await SceneLoader.LoadAssetContainerAsync(
-        "/src/assets/3D/",
-        "chairfolded.glb",
-        scene
-    );
+    if (!cache.chairfolded || cache.chairfolded.isDisposed()) {
+        const result = await SceneLoader.ImportMeshAsync("", "/src/assets/3D/", "chairfolded.glb", scene);
+        cache.chairfolded = result.meshes[0] as Mesh;
+        cache.chairfolded.setEnabled(false);
+    }
 
-    const rootMesh = container.meshes[0] as Mesh;
-    const childMeshes = container.meshes.slice(1) as Mesh[];
+    const root = cache.chairfolded;
 
     PLACEMENTS.forEach((cfg, i) => {
-        const parent = new Mesh(`chairfolded_${i}`, scene);
-        parent.position = new Vector3(cfg.x, 0, cfg.z);
-        parent.rotation = new Vector3(cfg.rotX, cfg.rotY, 0);
-        parent.scaling  = new Vector3(cfg.scale, cfg.scale, cfg.scale);
-
-        childMeshes.forEach((child) => {
-            if (child.geometry) {
-                const instance = child.createInstance(`${child.name}_${i}`);
-                instance.parent = parent;
-            }
-        });
-    });     
+        const clone = root.clone(`chairfolded_${i}`, null)!;
+        clone.setEnabled(true);
+        clone.metadata = { hmr: true };  
+        clone.position = new Vector3(cfg.x, 0, cfg.z);
+        clone.rotation = new Vector3(cfg.rotX, cfg.rotY, 0);
+        clone.scaling  = new Vector3(cfg.scale, cfg.scale, cfg.scale);
+    });   
 }
