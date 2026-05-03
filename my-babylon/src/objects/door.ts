@@ -31,11 +31,11 @@ export async function createDoors(scene: Scene, shadowGen: ShadowGenerator): Pro
         const mat = child.material as PBRMaterial;
         if (mat?.albedoColor) {
             if (mat.albedoTexture) {
-                mat.albedoTexture.level = 0.5;
+                mat.albedoTexture.level = 0.2;  // 텍스처 영향 더 줄이기
             }
-            mat.roughness = 0.9; // 거칠게
-            mat.metallic = 0.0;  // 금속성 낮춤
-            mat.albedoColor = new Color3(0.20, 0.12, 0.06);
+            mat.roughness = 0.95;
+            mat.metallic  = 0.0;
+            mat.albedoColor = new Color3(0.10, 0.05, 0.02);  // 훨씬 짙은 다크브라운
         }
     });
 

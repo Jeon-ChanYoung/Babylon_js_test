@@ -13,10 +13,10 @@ import "@babylonjs/loaders/glTF";
 
 /* ─── 배치 인터페이스 ─── */
 interface Placement {
-  x: number;
-  z: number;
-  rotY: number;
-  scale: number;
+    x: number;
+    z: number;
+    rotY: number;
+    scale: number;
 }
 
 const SCALE = 6;
@@ -75,6 +75,8 @@ export async function createChairs(scene: Scene, shadowGen: ShadowGenerator): Pr
             if (child.geometry) {
                 const inst = child.createInstance(`${child.name}_${i}`);
                 inst.parent = parent;
+                shadowGen.addShadowCaster(inst);
+                inst.receiveShadows = true;
             }
         });
     });

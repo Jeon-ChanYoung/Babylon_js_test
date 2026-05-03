@@ -25,7 +25,12 @@ const WALL_TILE_DENSITY = 0.1;
 const MOLDING_HEIGHT = 1.0; // 몰딩 세로 두께
 const MOLDING_DEPTH  = 0.2; // 벽에서 얼마나 튀어나오는지
 const MOLDING_BOTTOM_Y = MOLDING_HEIGHT / 2;                          
-const MOLDING_TOP_Y    = WALL_HEIGHT - MOLDING_HEIGHT / 2;          
+const MOLDING_TOP_Y    = WALL_HEIGHT - MOLDING_HEIGHT / 2;      
+
+const BORDER_SIZE  = 300;   // 충분히 크게
+const FRAME_THICK  = 4.0;   // 회색 프레임 두께
+const FRAME_Y      = WALL_HEIGHT + 0.01;  // 벽 꼭대기와 같은 높이
+
 
 export function createRoom(scene: Scene, shadowGen: ShadowGenerator) {
   /* ═══════════════════════════════════════════
@@ -81,8 +86,9 @@ export function createRoom(scene: Scene, shadowGen: ShadowGenerator) {
     *  몰딩
     * ═══════════════════════════════════════════ */
     const moldingMat = new StandardMaterial("moldingMat", scene);
-    moldingMat.diffuseColor  = new Color3(0.15, 0.09, 0.04);    
-    moldingMat.specularColor = new Color3(0.12, 0.12, 0.12);     
+    moldingMat.diffuseColor  = new Color3(0.12, 0.07, 0.03);   // 더 어둡고 중립적인 갈색
+    moldingMat.specularColor = new Color3(0.15, 0.10, 0.07);   // specular도 낮춰서 주황기 제거
+    moldingMat.specularPower = 48;
 
 
    /* ═══════════════════════════════════════════  
@@ -127,8 +133,8 @@ export function createRoom(scene: Scene, shadowGen: ShadowGenerator) {
         pos: Vector3,            
         inwardOffset: Vector3    
     ) => {
-        const sizeW = lengthAxis === "x" ? length : MOLDING_DEPTH + WALL_THICK;
-        const sizeD = lengthAxis === "z" ? length : MOLDING_DEPTH + WALL_THICK;
+        const sizeW = lengthAxis === "x" ? length : MOLDING_DEPTH;
+        const sizeD = lengthAxis === "z" ? length : MOLDING_DEPTH;
 
         // 하단 몰딩
         const bottom = MeshBuilder.CreateBox(
@@ -159,11 +165,75 @@ export function createRoom(scene: Scene, shadowGen: ShadowGenerator) {
         top.receiveShadows = true;
     };
 
-    /* ─── 가로벽 몰딩 (X축 방향으로 긴 줄) ─── */
-    createMolding("moldBack", "x", ROOM_WIDTH, new Vector3(0, 0, halfD), new Vector3(0, 0, -MOLDING_DEPTH / 2));
-    createMolding("moldFront", "x", ROOM_WIDTH, new Vector3(0, 0, -halfD), new Vector3(0, 0, MOLDING_DEPTH / 2));
+    /* ─── 가로벽 몰딩 ─── */
+    createMolding("moldBack",  "x", ROOM_WIDTH, new Vector3(0, 0, halfD),  new Vector3(0, 0, -(WALL_THICK / 2 + MOLDING_DEPTH / 2)));
+    createMolding("moldFront", "x", ROOM_WIDTH, new Vector3(0, 0, -halfD), new Vector3(0, 0,  (WALL_THICK / 2 + MOLDING_DEPTH / 2)));
 
-    /* ─── 세로벽 몰딩 (Z축 방향으로 긴 줄) ─── */
-    createMolding("moldLeft", "z", ROOM_DEPTH, new Vector3(-halfW, 0, 0), new Vector3(MOLDING_DEPTH / 2, 0, 0));
-    createMolding("moldRight", "z", ROOM_DEPTH, new Vector3(halfW, 0, 0), new Vector3(-MOLDING_DEPTH / 2, 0, 0));
+    /* ─── 세로벽 몰딩 ─── */
+    createMolding("moldLeft",  "z", ROOM_DEPTH, new Vector3(-halfW, 0, 0), new Vector3( (WALL_THICK / 2 + MOLDING_DEPTH / 2), 0, 0));
+    createMolding("moldRight", "z", ROOM_DEPTH, new Vector3( halfW, 0, 0), new Vector3(-(WALL_THICK / 2 + MOLDING_DEPTH / 2), 0, 0));
+
+
+
+    /* ── 검정 재질 ── */
+    const blackMat = new StandardMaterial("blackMat", scene);
+    blackMat.diffuseColor  = new Color3(0.03, 0.03, 0.03);
+    blackMat.specularColor = new Color3(0, 0, 0);
+    blackMat.disableLighting = true
+
+    /* ── 회색 프레임 재질 ── */
+    const grayMat = new StandardMaterial("grayMat", scene);
+    grayMat.diffuseColor  = new Color3(0.03, 0.03, 0.03);
+    grayMat.specularColor = new Color3(0, 0, 0);
+
+    const createFlatBox = (
+        name: string,
+        w: number, h: number, d: number,
+        pos: Vector3,
+        mat: StandardMaterial
+    ) => {
+        const box = MeshBuilder.CreateBox(name, { width: w, height: h, depth: d }, scene);
+        box.position = pos;
+        box.material = mat;
+    };
+
+    /* ─── 회색 프레임 (벽 상단 테두리, 방 바로 바깥) ─── */
+    // Back
+    createFlatBox("frameBack",  ROOM_WIDTH + FRAME_THICK * 2, 0.5, FRAME_THICK,
+        new Vector3(0, FRAME_Y, halfD + FRAME_THICK / 2), grayMat);
+    // Front
+    createFlatBox("frameFront", ROOM_WIDTH + FRAME_THICK * 2, 0.5, FRAME_THICK,
+        new Vector3(0, FRAME_Y, -halfD - FRAME_THICK / 2), grayMat);
+    // Left
+    createFlatBox("frameLeft",  FRAME_THICK, 0.5, ROOM_DEPTH,
+        new Vector3(-halfW - FRAME_THICK / 2, FRAME_Y, 0), grayMat);
+    // Right
+    createFlatBox("frameRight", FRAME_THICK, 0.5, ROOM_DEPTH,
+        new Vector3(halfW + FRAME_THICK / 2, FRAME_Y, 0), grayMat);
+
+    /* ─── 검정 바깥 평면 (회색 프레임 바깥 전부) ─── */
+    const outerY = FRAME_Y + 0.01;  // 프레임보다 살짝 위
+    const frameOuter = FRAME_THICK;
+
+    // Back 바깥
+    createFlatBox("blackBack",  BORDER_SIZE, 0.5, BORDER_SIZE,
+        new Vector3(0, outerY, halfD + frameOuter + BORDER_SIZE / 2), blackMat);
+    // Front 바깥
+    createFlatBox("blackFront", BORDER_SIZE, 0.5, BORDER_SIZE,
+        new Vector3(0, outerY, -halfD - frameOuter - BORDER_SIZE / 2), blackMat);
+    // Left 바깥
+    createFlatBox("blackLeft",  BORDER_SIZE, 0.5, BORDER_SIZE,
+        new Vector3(-halfW - frameOuter - BORDER_SIZE / 2, outerY, 0), blackMat);
+    // Right 바깥
+    createFlatBox("blackRight", BORDER_SIZE, 0.5, BORDER_SIZE,
+        new Vector3(halfW + frameOuter + BORDER_SIZE / 2, outerY, 0), blackMat);
+    // 코너 4개 (빈틈 없애기)
+    createFlatBox("blackCornerBL", BORDER_SIZE, 0.5, BORDER_SIZE,
+        new Vector3(-halfW - frameOuter - BORDER_SIZE / 2, outerY, -halfD - frameOuter - BORDER_SIZE / 2), blackMat);
+    createFlatBox("blackCornerBR", BORDER_SIZE, 0.5, BORDER_SIZE,
+        new Vector3(halfW + frameOuter + BORDER_SIZE / 2, outerY, -halfD - frameOuter - BORDER_SIZE / 2), blackMat);
+    createFlatBox("blackCornerTL", BORDER_SIZE, 0.5, BORDER_SIZE,
+        new Vector3(-halfW - frameOuter - BORDER_SIZE / 2, outerY, halfD + frameOuter + BORDER_SIZE / 2), blackMat);
+    createFlatBox("blackCornerTR", BORDER_SIZE, 0.5, BORDER_SIZE,
+        new Vector3(halfW + frameOuter + BORDER_SIZE / 2, outerY, halfD + frameOuter + BORDER_SIZE / 2), blackMat);
 }

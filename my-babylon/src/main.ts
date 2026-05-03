@@ -74,7 +74,6 @@ if (import.meta.hot?.data?.engine) {
 scene.meshes.forEach((m: { freezeWorldMatrix: () => any; }) => m.freezeWorldMatrix());
 scene.materials.forEach((m: { freeze: () => any; }) => m.freeze());
 
-
 if (import.meta.hot) {
     import.meta.hot.accept();
     import.meta.hot.dispose((data: any) => {

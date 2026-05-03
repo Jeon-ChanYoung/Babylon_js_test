@@ -1,4 +1,4 @@
-import { Mesh, SceneLoader, Vector3, Scene, ShadowGenerator, Color3, PBRMaterial } from "@babylonjs/core";
+import { Mesh, SceneLoader, Vector3, Scene, ShadowGenerator, Color3, PBRMaterial, TransformNode } from "@babylonjs/core";
 import "@babylonjs/loaders/glTF";
 
 interface Placement {
@@ -26,21 +26,29 @@ export async function createCabinets(scene: Scene, shadowGen: ShadowGenerator): 
     }
 
     const root = cache.cabinet;
+    const children = root.getChildMeshes() as Mesh[];
 
-    root.getChildMeshes().forEach((child) => {
-        const mat = child.material as PBRMaterial;
-       if (mat.albedoTexture) {
-            mat.albedoTexture.level = 0.6; // 기본 1.0, 낮을수록 어두움
+    children.forEach((child) => {
+        const mat = child.material;
+        if (!(mat instanceof PBRMaterial)) return;
+
+        if (mat.albedoTexture) {
+            mat.albedoTexture.level = 0.7; // 기본 1.0, 낮을수록 어두움
         }
     });
 
     PLACEMENTS.forEach((cfg, i) => {
-        const clone = root.clone(`cabinet_${i}`, null)!;
-        clone.setEnabled(true);
-        clone.metadata = { hmr: true };  
+        const parent = new TransformNode(`cabinet_${i}`, scene);
+        parent.position = new Vector3(cfg.x, 0, cfg.z);
+        parent.rotation = new Vector3(0, cfg.rotY, 0);
+        parent.scaling  = new Vector3(cfg.scale, cfg.scale, cfg.scale);
+        parent.metadata = { hmr: true };
 
-        clone.position = new Vector3(cfg.x, 0, cfg.z);
-        clone.rotation = new Vector3(0, cfg.rotY, 0);
-        clone.scaling  = new Vector3(cfg.scale, cfg.scale, cfg.scale);
+        children.forEach((child) => {
+            if (child.geometry) {
+                const inst = child.createInstance(`${child.name}_${i}`);
+                inst.parent = parent;
+            }
+        });
     });
 }

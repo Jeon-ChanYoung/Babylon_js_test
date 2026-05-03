@@ -42,5 +42,12 @@ export async function createTables(scene: Scene, shadowGen: ShadowGenerator): Pr
         clone.position = new Vector3(cfg.x, 0, cfg.z);
         clone.rotation = new Vector3(0, cfg.rotY, 0);
         clone.scaling  = new Vector3(-cfg.scale, cfg.scale, cfg.scale);
+        
+        clone.getChildMeshes().forEach((child) => {
+            shadowGen.addShadowCaster(child);
+            child.receiveShadows = true;
+        });
+        shadowGen.addShadowCaster(clone);
+        clone.receiveShadows = true;
     });
 }
