@@ -50,6 +50,7 @@ if (import.meta.hot?.data?.engine) {
     window.addEventListener("resize", () => engine.resize()); 
 }
 
+
 (async () => {
     console.time("load");
     await Promise.all([
@@ -71,8 +72,6 @@ if (import.meta.hot?.data?.engine) {
     console.timeEnd("load");
 })();
 
-scene.meshes.forEach((m: { freezeWorldMatrix: () => any; }) => m.freezeWorldMatrix());
-scene.materials.forEach((m: { freeze: () => any; }) => m.freeze());
 
 if (import.meta.hot) {
     import.meta.hot.accept();

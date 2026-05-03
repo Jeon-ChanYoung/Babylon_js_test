@@ -23,7 +23,7 @@ const WALL_TILE_DENSITY = 0.1;
 
 /* ─── 몰딩 치수 ─── */
 const MOLDING_HEIGHT = 1.0; // 몰딩 세로 두께
-const MOLDING_DEPTH  = 0.2; // 벽에서 얼마나 튀어나오는지
+const MOLDING_DEPTH  = 0.3; // 벽에서 얼마나 튀어나오는지
 const MOLDING_BOTTOM_Y = MOLDING_HEIGHT / 2;                          
 const MOLDING_TOP_Y    = WALL_HEIGHT - MOLDING_HEIGHT / 2;      
 
@@ -46,8 +46,8 @@ export function createRoom(scene: Scene, shadowGen: ShadowGenerator) {
         scene
     );
     const floorMat = new StandardMaterial("floorMat", scene);
-    floorMat.diffuseColor  = new Color3(0.76, 0.60, 0.42);  
-    floorMat.specularColor = new Color3(0.15, 0.15, 0.15);
+    floorMat.diffuseColor  = new Color3(0.62, 0.48, 0.32);  // 기존보다 살짝 어둡게
+    floorMat.specularColor = new Color3(0.10, 0.10, 0.10);
 
     const floorTex = new Texture(floorTexturePath, scene);
     floorTex.uScale = 8;
@@ -63,7 +63,7 @@ export function createRoom(scene: Scene, shadowGen: ShadowGenerator) {
 
     /* 가로벽 (Front/Back)  */
     const wallMatFB = new StandardMaterial("wallMatFB", scene);
-    wallMatFB.diffuseColor  = new Color3(0.28, 0.18, 0.08);
+    wallMatFB.diffuseColor  = new Color3(0.22, 0.13, 0.06);  // 짙은 갈색
     wallMatFB.specularColor = new Color3(0.05, 0.05, 0.05);
     wallMatFB.backFaceCulling = false;
     const texFB = new Texture(wallTexturePath, scene);
@@ -73,7 +73,7 @@ export function createRoom(scene: Scene, shadowGen: ShadowGenerator) {
 
     /* 세로벽 (Left/Right) 90도 회전  */
     const wallMatLR = new StandardMaterial("wallMatLR", scene);
-    wallMatLR.diffuseColor  = new Color3(0.28, 0.18, 0.08);
+    wallMatLR.diffuseColor  = new Color3(0.22, 0.13, 0.06);  // ← wallMatLR로 수정
     wallMatLR.specularColor = new Color3(0.05, 0.05, 0.05);
     wallMatLR.backFaceCulling = false;
     const texLR = new Texture(wallTexturePath, scene);
@@ -89,6 +89,7 @@ export function createRoom(scene: Scene, shadowGen: ShadowGenerator) {
     moldingMat.diffuseColor  = new Color3(0.12, 0.07, 0.03);   // 더 어둡고 중립적인 갈색
     moldingMat.specularColor = new Color3(0.15, 0.10, 0.07);   // specular도 낮춰서 주황기 제거
     moldingMat.specularPower = 48;
+    moldingMat.zOffset = -1;
 
 
    /* ═══════════════════════════════════════════  
@@ -165,14 +166,17 @@ export function createRoom(scene: Scene, shadowGen: ShadowGenerator) {
         top.receiveShadows = true;
     };
 
-    /* ─── 가로벽 몰딩 ─── */
-    createMolding("moldBack",  "x", ROOM_WIDTH, new Vector3(0, 0, halfD),  new Vector3(0, 0, -(WALL_THICK / 2 + MOLDING_DEPTH / 2)));
-    createMolding("moldFront", "x", ROOM_WIDTH, new Vector3(0, 0, -halfD), new Vector3(0, 0,  (WALL_THICK / 2 + MOLDING_DEPTH / 2)));
+    /* ─── 가로벽 몰딩: 세로몰딩이 차지하는 공간(MOLDING_DEPTH)만큼만 줄이기 ─── */
+    createMolding("moldBack",  "x", ROOM_WIDTH - MOLDING_DEPTH * 5, new Vector3(0, 0, halfD),
+        new Vector3(0, 0, -(WALL_THICK / 2 + MOLDING_DEPTH / 2)));
+    createMolding("moldFront", "x", ROOM_WIDTH - MOLDING_DEPTH * 5, new Vector3(0, 0, -halfD),
+        new Vector3(0, 0,  (WALL_THICK / 2 + MOLDING_DEPTH / 2)));
 
-    /* ─── 세로벽 몰딩 ─── */
-    createMolding("moldLeft",  "z", ROOM_DEPTH, new Vector3(-halfW, 0, 0), new Vector3( (WALL_THICK / 2 + MOLDING_DEPTH / 2), 0, 0));
-    createMolding("moldRight", "z", ROOM_DEPTH, new Vector3( halfW, 0, 0), new Vector3(-(WALL_THICK / 2 + MOLDING_DEPTH / 2), 0, 0));
-
+    /* ─── 세로벽 몰딩: 가로벽 두께만큼 줄여서 관통 방지 ─── */
+    createMolding("moldLeft",  "z", ROOM_DEPTH - MOLDING_DEPTH * 3, new Vector3(-halfW, 0, 0),
+        new Vector3( (WALL_THICK / 2 + MOLDING_DEPTH / 2), 0, 0));
+    createMolding("moldRight", "z", ROOM_DEPTH - MOLDING_DEPTH * 3, new Vector3( halfW, 0, 0),
+        new Vector3(-(WALL_THICK / 2 + MOLDING_DEPTH / 2), 0, 0));
 
 
     /* ── 검정 재질 ── */

@@ -34,6 +34,8 @@ export async function createTables(scene: Scene, shadowGen: ShadowGenerator): Pr
         }
     });
 
+    
+
     PLACEMENTS.forEach((cfg, i) => {
         const clone = root.clone(`table_${i}`, null)!;
         clone.setEnabled(true);

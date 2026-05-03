@@ -21,6 +21,10 @@ interface Placement {
 
 const SCALE = 6;
 
+const PUSH_RADIUS = 3;   // ★ 추가: 밀어내기 감지 반경 (scale 6 기준)
+const PUSH_WEIGHT = 1;   // ★ 추가: 무게 (1=보통, 높을수록 안 밀림)
+
+
 const PLACEMENTS: Placement[] = [
     // 뒷줄 2개 (칠판 쪽 바라봄)
     { x: -5,  z:   0, rotY:  Math.PI,       scale: SCALE },
@@ -51,10 +55,10 @@ export async function createChairs(scene: Scene, shadowGen: ShadowGenerator): Pr
         cache.chair = result.meshes[0] as Mesh;
         cache.chair.setEnabled(false);
     }
-
+    // createChairs 안에서 확인
+    
     const root = cache.chair;
     const children = root.getChildMeshes() as Mesh[];
-
     children.forEach((child) => {
         const mat = child.material;
         if (!(mat instanceof PBRMaterial)) return;
