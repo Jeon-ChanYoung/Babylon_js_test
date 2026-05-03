@@ -1,59 +1,3 @@
-// // main.ts
-
-// import "./style.css";
-// import "@babylonjs/core/Lights/Shadows/shadowGeneratorSceneComponent";
-// import { DracoCompression } from "@babylonjs/core/Meshes/Compression/dracoCompression";
-
-// import { createEngine, createScene } from "./core/engine";
-// import { createCamera } from "./core/camera";
-// import { createLighting } from "./core/lighting";
-// import { createPipeline } from "./core/pipeline";
-// import { createRoom } from "./objects/room";
-// import { createChairs } from "./objects/chair";
-// import { createCabinets } from "./objects/cabinet";
-// import { createWaterfilters } from "./objects/waterfilter";
-// import { createChalkboards } from "./objects/chalkboard";
-// import { createTrashbins } from "./objects/trashbin";
-// import { createChairfoldeds } from "./objects/chairfolded";
-// import { createboards } from "./objects/board";
-// import { createTables } from "./objects/table";
-
-// DracoCompression.Configuration.decoder = {
-//     wasmUrl: "https://cdn.babylonjs.com/draco_wasm_wrapper_gltf.js",
-//     wasmBinaryUrl: "https://cdn.babylonjs.com/draco_decoder_gltf.wasm",
-//     fallbackUrl: "https://cdn.babylonjs.com/draco_decoder_gltf.js",
-// };
-
-// const canvas = document.getElementById("renderCanvas") as HTMLCanvasElement;
-// const engine = createEngine(canvas);
-// const scene  = createScene(engine);
-// const camera = createCamera(scene, canvas);
-
-// const { shadowGen } = createLighting(scene);
-
-// createRoom(scene, shadowGen);
-// createPipeline(scene, camera);
-
-// engine.runRenderLoop(() => scene.render());
-// window.addEventListener("resize", () => engine.resize());
-
-// (async () => {
-//     console.time("load");
-
-//     await Promise.all([
-//         // createChairs(scene, shadowGen),
-//         // createChairfoldeds(scene, shadowGen),
-//         // createCabinets(scene, shadowGen),
-//         // createChalkboards(scene, shadowGen),
-//         createboards(scene, shadowGen),
-//         createTrashbins(scene, shadowGen),
-//         createWaterfilters(scene, shadowGen),
-//         createTables(scene, shadowGen),
-//     ]);
-
-//     console.timeEnd("load");
-// })();
-
 // main.ts
 
 import "./style.css";
@@ -74,6 +18,11 @@ import { createChairfoldeds } from "./objects/chairfolded";
 import { createboards } from "./objects/board";
 import { createTables } from "./objects/table";
 import { createExtinguishers } from "./objects/extinguisher";
+import { createDoors } from "./objects/door";
+import { createBrooms } from "./objects/broom";
+import { createDustpans } from "./objects/dustpan";
+import { createMopsinks } from "./objects/mopsink";
+import { createLamps } from "./objects/lamp";
 
 DracoCompression.Configuration.decoder = {
     wasmUrl: "https://cdn.babylonjs.com/draco_wasm_wrapper_gltf.js",
@@ -97,22 +46,8 @@ if (import.meta.hot?.data?.engine) {
     ({ shadowGen } = createLighting(scene));
     createRoom(scene, shadowGen);
     createPipeline(scene, camera);
-
-    let needsRender = true;
-
-    camera.onViewMatrixChangedObservable.add(() => { needsRender = true; });
-
-    engine.runRenderLoop(() => {
-        if (needsRender) {
-            scene.render();
-            needsRender = false;
-        }
-    });
-
-    window.addEventListener("resize", () => {
-        needsRender = true;
-        engine.resize();
-    });
+    engine.runRenderLoop(() => scene.render());       
+    window.addEventListener("resize", () => engine.resize()); 
 }
 
 (async () => {
@@ -123,10 +58,15 @@ if (import.meta.hot?.data?.engine) {
         createTrashbins(scene, shadowGen),
         createWaterfilters(scene, shadowGen),
         createChalkboards(scene, shadowGen),
-        // createCabinets(scene, shadowGen),
+        createCabinets(scene, shadowGen),
         createChairfoldeds(scene, shadowGen),
         createExtinguishers(scene, shadowGen),
         createChairs(scene, shadowGen),
+        createDoors(scene, shadowGen),
+        createBrooms(scene, shadowGen),
+        createDustpans(scene, shadowGen),
+        createMopsinks(scene, shadowGen),
+        createLamps(scene, shadowGen),
     ]);
     console.timeEnd("load");
 })();
@@ -134,7 +74,7 @@ if (import.meta.hot?.data?.engine) {
 scene.meshes.forEach((m: { freezeWorldMatrix: () => any; }) => m.freezeWorldMatrix());
 scene.materials.forEach((m: { freeze: () => any; }) => m.freeze());
 
-// ── HMR 등록 ──
+
 if (import.meta.hot) {
     import.meta.hot.accept();
     import.meta.hot.dispose((data: any) => {

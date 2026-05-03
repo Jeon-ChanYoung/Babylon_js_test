@@ -1,6 +1,6 @@
 // object/extinguisher.ts
 
-import { Mesh, SceneLoader, Vector3, Scene, ShadowGenerator } from "@babylonjs/core";
+import { Mesh, SceneLoader, Vector3, Scene, ShadowGenerator, Color3, PBRMaterial } from "@babylonjs/core";
 import "@babylonjs/loaders/glTF";
 
 interface Placement {
@@ -27,6 +27,15 @@ export async function createExtinguishers(scene: Scene, shadowGen: ShadowGenerat
     }
 
     const root = cache.extinguisher;
+
+    root.getChildMeshes().forEach((child) => {
+        const mat = child.material as PBRMaterial;
+        if (mat?.albedoColor) {
+            mat.albedoColor = new Color3(0.9, 0.9, 0.9);
+            mat.metallic = 0.9;
+            mat.roughness = 0.5;
+        }
+    });
 
     PLACEMENTS.forEach((cfg, i) => {
         const clone = root.clone(`extinguisher_${i}`, null)!;

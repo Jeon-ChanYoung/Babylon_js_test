@@ -1,4 +1,4 @@
-import { Mesh, SceneLoader, Vector3, Scene, ShadowGenerator } from "@babylonjs/core";
+import { Mesh, SceneLoader, Vector3, Scene, ShadowGenerator, PBRMaterial, Color3 } from "@babylonjs/core";
 import "@babylonjs/loaders/glTF";
 
 interface Placement {
@@ -9,10 +9,10 @@ interface Placement {
     scale: number;
 }
 
-const SCALE = 30;
+const SCALE = 28;
 
 const PLACEMENTS: Placement[] = [
-    { x: -4, y: 4, z: 32, rotY: Math.PI, scale: SCALE },
+    { x: -2, y: 4, z: 31, rotY: Math.PI, scale: SCALE },
 ];
 const cache: Record<string, Mesh> = ((window as any).__tmplCache ??= {});
 
@@ -25,6 +25,13 @@ export async function createChalkboards(scene: Scene, shadowGen: ShadowGenerator
     }
 
     const root = cache.chalkboard;
+
+    root.getChildMeshes().forEach((child) => {
+        const mat = child.material as PBRMaterial;
+        if (mat?.albedoColor) {
+            mat.albedoColor = new Color3(0.05, 0.1, 0.05); // 어두운 녹색, 값 조절 가능
+        }
+    });
 
     PLACEMENTS.forEach((cfg, i) => {
         const clone = root.clone(`chalkboard_${i}`, null)!;

@@ -7,6 +7,7 @@ import {
     SceneLoader,
     Mesh,
     TransformNode,
+    PBRMaterial,
 } from "@babylonjs/core";
 import "@babylonjs/loaders/glTF";
 
@@ -38,7 +39,8 @@ const PLACEMENTS: Placement[] = [
     // 오른쪽 하단 단독
     { x:  47, z: -30, rotY: -Math.PI * 0.5, scale: SCALE },
 
-    { x:  28, z: 26, rotY: 0, scale: SCALE },
+    // 책상 전용
+    { x:  29, z: 26, rotY: 0, scale: SCALE },
 ];
 const cache: Record<string, Mesh> = ((window as any).__tmplCache ??= {});
 
@@ -52,6 +54,15 @@ export async function createChairs(scene: Scene, shadowGen: ShadowGenerator): Pr
 
     const root = cache.chair;
     const children = root.getChildMeshes() as Mesh[];
+
+    children.forEach((child) => {
+        const mat = child.material;
+        if (!(mat instanceof PBRMaterial)) return;
+
+        if (mat.albedoTexture) {
+            mat.albedoTexture.level = 0.7; // 기본 1.0, 낮을수록 어두움
+        }
+    });
 
     PLACEMENTS.forEach((cfg, i) => {
         const parent = new TransformNode(`chair_${i}`, scene);

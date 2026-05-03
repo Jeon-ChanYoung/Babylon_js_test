@@ -1,4 +1,6 @@
-import { Mesh, SceneLoader, Vector3, Scene, ShadowGenerator } from "@babylonjs/core";
+// objects/table.ts
+
+import { Mesh, SceneLoader, Vector3, Scene, ShadowGenerator, Color3, PBRMaterial } from "@babylonjs/core";
 import "@babylonjs/loaders/glTF";
 
 interface Placement {
@@ -24,6 +26,13 @@ export async function createTables(scene: Scene, shadowGen: ShadowGenerator): Pr
     }
 
     const root = cache.table;
+
+    root.getChildMeshes().forEach((child) => {
+        const mat = child.material as PBRMaterial;
+        if (mat?.albedoColor) {
+            mat.albedoColor = new Color3(0.3, 0.2, 0.1);
+        }
+    });
 
     PLACEMENTS.forEach((cfg, i) => {
         const clone = root.clone(`table_${i}`, null)!;

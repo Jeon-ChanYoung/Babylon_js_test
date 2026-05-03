@@ -11,10 +11,10 @@ interface Placement {
     scale: number;
 }
 
-const SCALE = 7;
+const SCALE = 6.5;
 
 const PLACEMENTS: Placement[] = [
-    { x: 38, y: 8, z: 32, rotY: Math.PI, scale: SCALE },
+    { x: 38.5, y: 8, z: 32, rotY: Math.PI, scale: SCALE },
 ];
 const cache: Record<string, Mesh> = ((window as any).__tmplCache ??= {});
 

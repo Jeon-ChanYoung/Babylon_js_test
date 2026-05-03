@@ -1,3 +1,5 @@
+// core/pipeline.ts
+
 import { Scene, ArcRotateCamera, DefaultRenderingPipeline } from "@babylonjs/core";
 
 export function createPipeline(scene: Scene, camera: ArcRotateCamera) {

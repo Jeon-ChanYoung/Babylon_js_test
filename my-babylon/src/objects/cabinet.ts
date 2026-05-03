@@ -1,4 +1,4 @@
-import { Mesh, SceneLoader, Vector3, Scene, ShadowGenerator } from "@babylonjs/core";
+import { Mesh, SceneLoader, Vector3, Scene, ShadowGenerator, Color3, PBRMaterial } from "@babylonjs/core";
 import "@babylonjs/loaders/glTF";
 
 interface Placement {
@@ -26,6 +26,13 @@ export async function createCabinets(scene: Scene, shadowGen: ShadowGenerator): 
     }
 
     const root = cache.cabinet;
+
+    root.getChildMeshes().forEach((child) => {
+        const mat = child.material as PBRMaterial;
+       if (mat.albedoTexture) {
+            mat.albedoTexture.level = 0.6; // 기본 1.0, 낮을수록 어두움
+        }
+    });
 
     PLACEMENTS.forEach((cfg, i) => {
         const clone = root.clone(`cabinet_${i}`, null)!;
