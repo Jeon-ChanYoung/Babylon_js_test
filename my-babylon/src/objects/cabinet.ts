@@ -41,7 +41,7 @@ export async function createCabinets(scene: Scene, shadowGen: ShadowGenerator): 
         const parent = new TransformNode(`cabinet_${i}`, scene);
         parent.position = new Vector3(cfg.x, 0, cfg.z);
         parent.rotation = new Vector3(0, cfg.rotY, 0);
-        parent.scaling  = new Vector3(cfg.scale, cfg.scale, cfg.scale);
+        parent.scaling  = new Vector3(-cfg.scale, cfg.scale, cfg.scale);
         parent.metadata = { hmr: true };
 
         children.forEach((child) => {

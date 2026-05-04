@@ -30,7 +30,7 @@ export async function createTables(scene: Scene, shadowGen: ShadowGenerator): Pr
     root.getChildMeshes().forEach((child) => {
         const mat = child.material as PBRMaterial;
         if (mat?.albedoColor) {
-            mat.albedoColor = new Color3(0.3, 0.2, 0.1);
+            mat.albedoColor = new Color3(0.45, 0.4, 0.3);
         }
     });
 

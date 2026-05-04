@@ -1,280 +1,299 @@
-// core/player.ts
+// objects/room.ts
 
 import {
-    Scene, Vector3, MeshBuilder, StandardMaterial, Color3,
-    KeyboardEventTypes, ArcRotateCamera, Mesh,
+    Scene,
+    MeshBuilder,
+    StandardMaterial,
+    Color3,
+    Texture,
+    Vector3,
+    ShadowGenerator,
+    Mesh,
 } from "@babylonjs/core";
 
-/* ═══════════════════════════════════════════════════════════════
- *  조작 변수
- * ═══════════════════════════════════════════════════════════════
- *  MOVE_SPEED : 최대 수평 이동 속도. 클수록 빠름.
- *
- *  SMOOTHING  : 속도 보간 계수 (0~1).
- *               0 → 즉각 반응 (딱딱함).
- *               1 → 변화 없음 (안 움직임).
- *               0.82면 약 12프레임(~200ms)에 최고속 90% 도달.
- *               0.5면 약 3프레임(~50ms), 0.95면 약 45프레임(~750ms).
- *
- *  JUMP_FORCE : 점프 시 초기 수직 속도. 클수록 높이 뜀.
- *               0.25 → 약 2.6 유닛 높이, 체공 ~0.7초.
- *
- *  GRAVITY    : 프레임당 수직 가속도 (음수).
- *               절대값 클수록 빨리 떨어짐.
- *
- *  GROUND_Y   : 바닥 안전 높이 (= 공 반지름).
- *               충돌 누락 시 이 아래로 떨어지면 강제 복원.
- * ═══════════════════════════════════════════════════════════════ */
-const MOVE_SPEED = 0.3;
-const SMOOTHING  = 0.82;
-const JUMP_FORCE = 0.25;
-const GRAVITY    = -0.012;
-const GROUND_Y   = 1.0;
-const DIAMETER   = 2;
+import "@babylonjs/loaders/glTF";
+import floorTexturePath from "/src/assets/floor/albedo.png"
+import wallTexturePath from "/src/assets/wall/albedo.png"
 
-export function createPlayer(scene: Scene): Mesh {
-    const sphere = MeshBuilder.CreateSphere("player", { diameter: DIAMETER }, scene);
-    sphere.position = new Vector3(0, 5, 0);
-    sphere.metadata = { hmr: true };
+const ROOM_WIDTH  = 100;  
+const ROOM_DEPTH  = 65;  
+const WALL_HEIGHT = 14;  
+const WALL_THICK  = 1; 
+const WALL_TILE_DENSITY = 0.1; 
 
-    const mat = new StandardMaterial("playerMat", scene);
-    mat.diffuseColor = new Color3(0.9, 0.25, 0.25);
-    sphere.material = mat;
+/* ─── 몰딩 치수 ─── */
+const MOLDING_HEIGHT = 1.0; // 몰딩 세로 두께
+const MOLDING_DEPTH  = 0.3; // 벽에서 얼마나 튀어나오는지
+const MOLDING_BOTTOM_Y = MOLDING_HEIGHT / 2;                          
+const MOLDING_TOP_Y    = WALL_HEIGHT - MOLDING_HEIGHT / 2;      
 
-    /* ── 충돌 타원체 (반지름 = DIAMETER/2) ── */
-    sphere.checkCollisions = true;
-    sphere.ellipsoid = new Vector3(1, 1, 1);
+const BORDER_SIZE  = 300;   // 충분히 크게
+const FRAME_THICK  = 4.0;   // 회색 프레임 두께
+const FRAME_Y      = WALL_HEIGHT + 0.01;  // 벽 꼭대기와 같은 높이
 
-    /* ── 상태 ── */
-    const velocity = Vector3.Zero();
-    let isGrounded = false;
 
-    /* ── 입력 ── */
-    const keys = new Set<string>();
-    scene.onKeyboardObservable.add((info) => {
-        const key = info.event.key.toLowerCase();
-        if (info.type === KeyboardEventTypes.KEYDOWN) keys.add(key);
-        else keys.delete(key);
-    });
-
-    /* ── 매 프레임 업데이트 ── */
-    scene.onBeforeRenderObservable.add(() => {
-        if (sphere.isDisposed()) return;
-        const cam = scene.activeCamera as ArcRotateCamera;
-        if (!cam) return;
-
-        // 카메라 기준 수평 방향
-        const fwd = cam.getDirection(Vector3.Forward());
-        fwd.y = 0; fwd.normalize();
-        const rgt = cam.getDirection(Vector3.Right());
-        rgt.y = 0; rgt.normalize();
-
-        // 입력 → 방향 벡터
-        const dir = Vector3.Zero();
-        if (keys.has("w") || keys.has("arrowup"))    dir.addInPlace(fwd);
-        if (keys.has("s") || keys.has("arrowdown"))  dir.addInPlace(fwd.scale(-1));
-        if (keys.has("a") || keys.has("arrowleft"))  dir.addInPlace(rgt.scale(-1));
-        if (keys.has("d") || keys.has("arrowright")) dir.addInPlace(rgt);
-        if (dir.length() > 0) dir.normalize();
-
-        // 수평 속도 보간: 현재 속도 → 목표 속도(dir * MOVE_SPEED)로 부드럽게 전환
-        velocity.x = velocity.x * SMOOTHING + dir.x * MOVE_SPEED * (1 - SMOOTHING);
-        velocity.z = velocity.z * SMOOTHING + dir.z * MOVE_SPEED * (1 - SMOOTHING);
-
-        // 점프
-        if (keys.has(" ") && isGrounded) {
-            velocity.y = JUMP_FORCE;
-            isGrounded = false;
-        }
-
-        // 중력
-        velocity.y += GRAVITY;
-
-        // 충돌 이동
-        const prevY = sphere.position.y;
-        sphere.moveWithCollisions(velocity);
-
-        // 착지 감지: 아래로 떨어지려 했는데 실제로 덜 떨어졌으면 → 바닥에 닿음
-        if (velocity.y <= 0 && sphere.position.y - prevY > velocity.y * 0.5) {
-            velocity.y = 0;
-            isGrounded = true;
-        }
-
-        // 바닥 안전망
-        if (sphere.position.y < GROUND_Y) {
-            sphere.position.y = GROUND_Y;
-            velocity.y = 0;
-            isGrounded = true;
-        }
-    });
-
-    return sphere;
-}
-
-// core/camera.ts
-
-import { ArcRotateCamera, Vector3, Scene } from "@babylonjs/core";
-
-/* ═══════════════════════════════════════════════════════════════
- *  카메라 변수
- * ═══════════════════════════════════════════════════════════════
- *  ALPHA      : 초기 수평 각도 (라디안).
- *               -PI/2 = 정면. 0 = 우측에서.
- *
- *  BETA       : 초기 수직 각도.
- *               0 = 바로 위에서. PI/2 = 수평. PI/3.5 ≈ 비스듬히.
- *
- *  RADIUS     : 카메라 ↔ 플레이어 거리. 클수록 멀리서 봄.
- *
- *  RADIUS_MIN : 최소 줌 거리. 2~3이면 캐릭터 가까이까지 줌 가능.
- *  RADIUS_MAX : 최대 줌 거리.
- *
- *  BETA_MIN   : 수직 회전 상한. 0에 가까울수록 꼭대기에서 봄.
- *  BETA_MAX   : 수직 회전 하한. PI/2면 수평까지만 가능.
- *
- *  WHEEL_PREC : 마우스 휠 감도. 클수록 한 틱당 줌 변화 적음 (둔감).
- *  INERTIA    : 회전 관성 (0~1). 1에 가까울수록 미끄러짐.
- *  SENS_X/Y   : 마우스 드래그 회전 감도. 클수록 둔감.
- *               500 = 빠른 회전, 1000 = 느린 회전, 2000 = 매우 느림.
- * ═══════════════════════════════════════════════════════════════ */
-const ALPHA      = -Math.PI / 2;
-const BETA       = Math.PI / 3.5;
-const RADIUS     = 20;
-
-const RADIUS_MIN = 3;
-const RADIUS_MAX = 60;
-
-const BETA_MIN   = 0.3;
-const BETA_MAX   = Math.PI / 2.2;
-
-const WHEEL_PREC = 3;
-const INERTIA    = 0.9;
-const SENS_X     = 500;
-const SENS_Y     = 500;
-
-export function createCamera(scene: Scene, canvas: HTMLCanvasElement) {
-    const camera = new ArcRotateCamera(
-        "camera", ALPHA, BETA, RADIUS,
-        Vector3.Zero(), scene
+export function createRoom(scene: Scene, shadowGen: ShadowGenerator) {
+  /* ═══════════════════════════════════════════
+   *  바닥
+   * ═══════════════════════════════════════════ */
+    const floor = MeshBuilder.CreateGround(
+        "floor",
+        { 
+            width: ROOM_WIDTH, 
+            height: ROOM_DEPTH, 
+            subdivisions: 1 
+        },
+        scene
     );
-    camera.attachControl(canvas, true);
+    const floorMat = new StandardMaterial("floorMat", scene);
+    floorMat.diffuseColor  = new Color3(0.62, 0.48, 0.32);  // 기존보다 살짝 어둡게
+    floorMat.specularColor = new Color3(0.10, 0.10, 0.10);
 
-    camera.lowerRadiusLimit    = RADIUS_MIN;
-    camera.upperRadiusLimit    = RADIUS_MAX;
-    camera.lowerBetaLimit      = BETA_MIN;
-    camera.upperBetaLimit      = BETA_MAX;
+    const floorTex = new Texture(floorTexturePath, scene);
+    floorTex.uScale = 8;
+    floorTex.vScale = 3;
+    floorTex.wAng = Math.PI / 2;      
+    floorMat.diffuseTexture = floorTex;
+    floor.material = floorMat;
+    floor.receiveShadows = true;
 
-    camera.wheelPrecision      = WHEEL_PREC;
-    camera.inertia             = INERTIA;
-    camera.angularSensibilityX = SENS_X;
-    camera.angularSensibilityY = SENS_Y;
+   /* ═══════════════════════════════════════════
+    *  벽 
+    * ═══════════════════════════════════════════ */
 
-    /* WASD는 플레이어가 사용하므로 카메라 키보드 비활성화 */
-    camera.keysUp    = [];
-    camera.keysDown  = [];
-    camera.keysLeft  = [];
-    camera.keysRight = [];
+    /* 가로벽 (Front/Back)  */
+    const wallMatFB = new StandardMaterial("wallMatFB", scene);
+    wallMatFB.diffuseColor  = new Color3(0.22, 0.13, 0.06);  // 짙은 갈색
+    wallMatFB.specularColor = new Color3(0.05, 0.05, 0.05);
+    wallMatFB.backFaceCulling = false;
+    const texFB = new Texture(wallTexturePath, scene);
+    texFB.uScale = ROOM_WIDTH * WALL_TILE_DENSITY;
+    texFB.vScale = WALL_HEIGHT * WALL_TILE_DENSITY;
+    wallMatFB.diffuseTexture = texFB;
 
-    /* 우클릭 패닝 비활성화 (플레이어가 직접 이동) */
-    camera.panningSensibility = 0;
+    /* 세로벽 (Left/Right) 90도 회전  */
+    const wallMatLR = new StandardMaterial("wallMatLR", scene);
+    wallMatLR.diffuseColor  = new Color3(0.22, 0.13, 0.06);  // ← wallMatLR로 수정
+    wallMatLR.specularColor = new Color3(0.05, 0.05, 0.05);
+    wallMatLR.backFaceCulling = false;
+    const texLR = new Texture(wallTexturePath, scene);
+    texLR.uScale = WALL_HEIGHT * WALL_TILE_DENSITY;  
+    texLR.vScale = ROOM_DEPTH * WALL_TILE_DENSITY;    
+    texLR.wAng   = Math.PI / 2;                        
+    wallMatLR.diffuseTexture = texLR;
 
-    return camera;
+   /* ═══════════════════════════════════════════
+    *  몰딩
+    * ═══════════════════════════════════════════ */
+    const moldingMat = new StandardMaterial("moldingMat", scene);
+    moldingMat.diffuseColor  = new Color3(0.12, 0.07, 0.03);   // 더 어둡고 중립적인 갈색
+    moldingMat.specularColor = new Color3(0.15, 0.10, 0.07);   // specular도 낮춰서 주황기 제거
+    moldingMat.specularPower = 48;
+    moldingMat.zOffset = -1;
+
+
+   /* ═══════════════════════════════════════════  
+    *  벽 생성 헬퍼
+    * ═══════════════════════════════════════════ */
+    const halfW = ROOM_WIDTH / 2;
+    const halfD = ROOM_DEPTH / 2;
+    const halfH = WALL_HEIGHT / 2;
+
+    const createWall = (
+        name: string,
+        width: number,
+        height: number,
+        depth: number,
+        position: Vector3,
+        mat: StandardMaterial
+    ): Mesh => {
+        const wall = MeshBuilder.CreateBox(
+        name, { width, height, depth }, scene
+        );
+        wall.position = position;
+        wall.material = mat;
+        wall.receiveShadows = true;
+        return wall;
+    };
+
+    // 가로벽 (Front/Back) — wallMatFB
+    createWall("wallBack",  ROOM_WIDTH, WALL_HEIGHT, WALL_THICK, new Vector3(0, halfH, halfD), wallMatFB);
+    createWall("wallFront", ROOM_WIDTH, WALL_HEIGHT, WALL_THICK, new Vector3(0, halfH, -halfD), wallMatFB);
+
+    // 세로벽 (Left/Right) — wallMatLR
+    createWall("wallLeft",  WALL_THICK, WALL_HEIGHT, ROOM_DEPTH, new Vector3(-halfW, halfH, 0), wallMatLR);
+    createWall("wallRight", WALL_THICK, WALL_HEIGHT, ROOM_DEPTH, new Vector3(halfW, halfH, 0), wallMatLR);
+
+   /* ═══════════════════════════════════════════
+    *  몰딩 생성 헬퍼
+    * ═══════════════════════════════════════════ */
+    const createMolding = (
+        baseName: string,
+        lengthAxis: "x" | "z",
+        length: number,
+        pos: Vector3,            
+        inwardOffset: Vector3    
+    ) => {
+        const sizeW = lengthAxis === "x" ? length : MOLDING_DEPTH;
+        const sizeD = lengthAxis === "z" ? length : MOLDING_DEPTH;
+
+        // 하단 몰딩
+        const bottom = MeshBuilder.CreateBox(
+            `${baseName}_bottom`,
+            { width: sizeW, height: MOLDING_HEIGHT, depth: sizeD },
+            scene
+        );
+        bottom.position = new Vector3(
+            pos.x + inwardOffset.x,
+            MOLDING_BOTTOM_Y,
+            pos.z + inwardOffset.z
+        );
+        bottom.material = moldingMat;
+        bottom.receiveShadows = true;
+
+        // 상단 몰딩
+        const top = MeshBuilder.CreateBox(
+            `${baseName}_top`,
+            { width: sizeW, height: MOLDING_HEIGHT, depth: sizeD },
+            scene
+        );
+        top.position = new Vector3(
+            pos.x + inwardOffset.x,
+            MOLDING_TOP_Y,
+            pos.z + inwardOffset.z
+        );
+        top.material = moldingMat;
+        top.receiveShadows = true;
+    };
+
+    /* ─── 가로벽 몰딩: 세로몰딩이 차지하는 공간(MOLDING_DEPTH)만큼만 줄이기 ─── */
+    createMolding("moldBack",  "x", ROOM_WIDTH - MOLDING_DEPTH * 5, new Vector3(0, 0, halfD),
+        new Vector3(0, 0, -(WALL_THICK / 2 + MOLDING_DEPTH / 2)));
+    createMolding("moldFront", "x", ROOM_WIDTH - MOLDING_DEPTH * 5, new Vector3(0, 0, -halfD),
+        new Vector3(0, 0,  (WALL_THICK / 2 + MOLDING_DEPTH / 2)));
+
+    /* ─── 세로벽 몰딩: 가로벽 두께만큼 줄여서 관통 방지 ─── */
+    createMolding("moldLeft",  "z", ROOM_DEPTH - MOLDING_DEPTH * 3, new Vector3(-halfW, 0, 0),
+        new Vector3( (WALL_THICK / 2 + MOLDING_DEPTH / 2), 0, 0));
+    createMolding("moldRight", "z", ROOM_DEPTH - MOLDING_DEPTH * 3, new Vector3( halfW, 0, 0),
+        new Vector3(-(WALL_THICK / 2 + MOLDING_DEPTH / 2), 0, 0));
+
+
+    /* ── 검정 재질 ── */
+    const blackMat = new StandardMaterial("blackMat", scene);
+    blackMat.diffuseColor  = new Color3(0.03, 0.03, 0.03);
+    blackMat.specularColor = new Color3(0, 0, 0);
+    blackMat.disableLighting = true
+
+    /* ── 회색 프레임 재질 ── */
+    const grayMat = new StandardMaterial("grayMat", scene);
+    grayMat.diffuseColor  = new Color3(0.03, 0.03, 0.03);
+    grayMat.specularColor = new Color3(0, 0, 0);
+
+    const createFlatBox = (
+        name: string,
+        w: number, h: number, d: number,
+        pos: Vector3,
+        mat: StandardMaterial
+    ) => {
+        const box = MeshBuilder.CreateBox(name, { width: w, height: h, depth: d }, scene);
+        box.position = pos;
+        box.material = mat;
+    };
+
+    /* ─── 회색 프레임 (벽 상단 테두리, 방 바로 바깥) ─── */
+    // Back
+    createFlatBox("frameBack",  ROOM_WIDTH + FRAME_THICK * 2, 0.5, FRAME_THICK,
+        new Vector3(0, FRAME_Y, halfD + FRAME_THICK / 2), grayMat);
+    // Front
+    createFlatBox("frameFront", ROOM_WIDTH + FRAME_THICK * 2, 0.5, FRAME_THICK,
+        new Vector3(0, FRAME_Y, -halfD - FRAME_THICK / 2), grayMat);
+    // Left
+    createFlatBox("frameLeft",  FRAME_THICK, 0.5, ROOM_DEPTH,
+        new Vector3(-halfW - FRAME_THICK / 2, FRAME_Y, 0), grayMat);
+    // Right
+    createFlatBox("frameRight", FRAME_THICK, 0.5, ROOM_DEPTH,
+        new Vector3(halfW + FRAME_THICK / 2, FRAME_Y, 0), grayMat);
+
+    /* ─── 검정 바깥 평면 (회색 프레임 바깥 전부) ─── */
+    const outerY = FRAME_Y + 0.01;  // 프레임보다 살짝 위
+    const frameOuter = FRAME_THICK;
+
+    // Back 바깥
+    createFlatBox("blackBack",  BORDER_SIZE, 0.5, BORDER_SIZE,
+        new Vector3(0, outerY, halfD + frameOuter + BORDER_SIZE / 2), blackMat);
+    // Front 바깥
+    createFlatBox("blackFront", BORDER_SIZE, 0.5, BORDER_SIZE,
+        new Vector3(0, outerY, -halfD - frameOuter - BORDER_SIZE / 2), blackMat);
+    // Left 바깥
+    createFlatBox("blackLeft",  BORDER_SIZE, 0.5, BORDER_SIZE,
+        new Vector3(-halfW - frameOuter - BORDER_SIZE / 2, outerY, 0), blackMat);
+    // Right 바깥
+    createFlatBox("blackRight", BORDER_SIZE, 0.5, BORDER_SIZE,
+        new Vector3(halfW + frameOuter + BORDER_SIZE / 2, outerY, 0), blackMat);
+    // 코너 4개 (빈틈 없애기)
+    createFlatBox("blackCornerBL", BORDER_SIZE, 0.5, BORDER_SIZE,
+        new Vector3(-halfW - frameOuter - BORDER_SIZE / 2, outerY, -halfD - frameOuter - BORDER_SIZE / 2), blackMat);
+    createFlatBox("blackCornerBR", BORDER_SIZE, 0.5, BORDER_SIZE,
+        new Vector3(halfW + frameOuter + BORDER_SIZE / 2, outerY, -halfD - frameOuter - BORDER_SIZE / 2), blackMat);
+    createFlatBox("blackCornerTL", BORDER_SIZE, 0.5, BORDER_SIZE,
+        new Vector3(-halfW - frameOuter - BORDER_SIZE / 2, outerY, halfD + frameOuter + BORDER_SIZE / 2), blackMat);
+    createFlatBox("blackCornerTR", BORDER_SIZE, 0.5, BORDER_SIZE,
+        new Vector3(halfW + frameOuter + BORDER_SIZE / 2, outerY, halfD + frameOuter + BORDER_SIZE / 2), blackMat);
 }
 
-// main.ts
+// objects/door.ts
 
-import "./style.css";
-import "@babylonjs/core/Lights/Shadows/shadowGeneratorSceneComponent";
-import { DracoCompression } from "@babylonjs/core/Meshes/Compression/dracoCompression";
+import { Mesh, SceneLoader, Vector3, Scene, ShadowGenerator, PBRMaterial, Color3 } from "@babylonjs/core";
+import "@babylonjs/loaders/glTF";
 
-import { createEngine, createScene } from "./core/engine";
-import { createCamera } from "./core/camera";
-import { createLighting } from "./core/lighting";
-import { createPipeline } from "./core/pipeline";
-import { createRoom } from "./objects/room";
-import { createChairs } from "./objects/chair";
-import { createCabinets } from "./objects/cabinet";
-import { createWaterfilters } from "./objects/waterfilter";
-import { createChalkboards } from "./objects/chalkboard";
-import { createTrashbins } from "./objects/trashbin";
-import { createChairfoldeds } from "./objects/chairfolded";
-import { createboards } from "./objects/board";
-import { createTables } from "./objects/table";
-import { createExtinguishers } from "./objects/extinguisher";
-import { createDoors } from "./objects/door";
-import { createBrooms } from "./objects/broom";
-import { createDustpans } from "./objects/dustpan";
-import { createMopsinks } from "./objects/mopsink";
-import { createLamps } from "./objects/lamp";
-
-DracoCompression.Configuration.decoder = {
-    wasmUrl: "https://cdn.babylonjs.com/draco_wasm_wrapper_gltf.js",
-    wasmBinaryUrl: "https://cdn.babylonjs.com/draco_decoder_gltf.wasm",
-    fallbackUrl: "https://cdn.babylonjs.com/draco_decoder_gltf.js",
-};
-
-const canvas = document.getElementById("renderCanvas") as HTMLCanvasElement;
-let engine: any, scene: any, camera: any, shadowGen: any;
-
-if (import.meta.hot?.data?.engine) {
-    ({ engine, scene, camera, shadowGen } = import.meta.hot.data);
-
-    [...scene.transformNodes, ...scene.meshes]
-        .filter((n: any) => n.metadata?.hmr)
-        .forEach((n: any) => n.dispose());
-} else {
-    engine = createEngine(canvas);
-    scene = createScene(engine);
-    camera = createCamera(scene, canvas);
-    ({ shadowGen } = createLighting(scene));
-    createRoom(scene, shadowGen);
-    createPipeline(scene, camera);
-    engine.runRenderLoop(() => scene.render());       
-    window.addEventListener("resize", () => engine.resize()); 
+interface Placement {
+    x: number;
+    z: number;
+    rotY: number;
+    scale: number;
 }
 
-scene.collisionsEnabled = true;
-scene.meshes.forEach((m: any) => { m.checkCollisions = true; });
-scene.onNewMeshAddedObservable.add((m: any) => { m.checkCollisions = true; });
+const SCALE = 12;
 
-const player = createPlayer(scene);
-camera.setTarget(player);
-
-(async () => {
-    console.time("load");
-    await Promise.all([
-        // createboards(scene, shadowGen),
-        // createTables(scene, shadowGen),
-        // createTrashbins(scene, shadowGen),
-        // createWaterfilters(scene, shadowGen),
-        // createChalkboards(scene, shadowGen),
-        // createCabinets(scene, shadowGen),
-        // createChairfoldeds(scene, shadowGen),
-        // createExtinguishers(scene, shadowGen),
-        // createChairs(scene, shadowGen),
-        // createDoors(scene, shadowGen),
-        // createBrooms(scene, shadowGen),
-        // createDustpans(scene, shadowGen),
-        // createMopsinks(scene, shadowGen),
-        // createLamps(scene, shadowGen),
-    ]);
-    console.timeEnd("load");
-})();
+const PLACEMENTS: Placement[] = [
+    { x: -26, z:  31.8, rotY: Math.PI, scale: SCALE },
+];
+const cache: Record<string, Mesh> = ((window as any).__tmplCache ??= {});
 
 
-if (import.meta.hot) {
-    import.meta.hot.accept();
-    import.meta.hot.dispose((data: any) => {
-        data.engine = engine;
-        data.scene = scene;
-        data.camera = camera;
-        data.shadowGen = shadowGen;
+export async function createDoors(scene: Scene, shadowGen: ShadowGenerator): Promise<void> {
+    if (!cache.door || cache.door.isDisposed()) {
+        const result = await SceneLoader.ImportMeshAsync("", "/src/assets/3D/", "door.glb", scene);
+        cache.door = result.meshes[0] as Mesh;
+        cache.door.setEnabled(false);
+    }
+
+    const root = cache.door;
+
+    root.getChildMeshes().forEach((child) => {
+        const mat = child.material as PBRMaterial;
+        if (mat?.albedoColor) {
+            if (mat.albedoTexture) {
+                mat.albedoTexture.level = 0.8; // 기본 1.0, 낮을수록 어두움
+            }
+            mat.roughness = 0.8;
+            mat.metallic  = 0.5;
+            mat.albedoColor = new Color3(0.10, 0.05, 0.02);  // 훨씬 짙은 다크브라운
+            mat.emissiveColor    = new Color3(0, 0, 0);
+        }
+    });
+
+
+    PLACEMENTS.forEach((cfg, i) => {
+        const clone = root.clone(`door_${i}`, null)!;
+        clone.setEnabled(true);
+        clone.metadata = { hmr: true };  
+
+        clone.position = new Vector3(cfg.x, 0, cfg.z);
+        clone.rotation = new Vector3(0, cfg.rotY, 0);
+        clone.scaling  = new Vector3(cfg.scale, cfg.scale, cfg.scale);
     });
 }
 
-function createPlayer(scene: any) {
-    throw new Error("Function not implemented.");
-}
-
-
-3개 추가 및 업데이트 했는데 실행시 공은 없고 조작은 회전, 확대 축소만 됨
+현재 4면으로 밀폐된 방에 지붕 추가하고자 함. 간단하게 추가해줘. 안에서 볼 때 보이도록. 그리고 텍스텨는 내가 적절히 추가할 테니 같은 방식으로

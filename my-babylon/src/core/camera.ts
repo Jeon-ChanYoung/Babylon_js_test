@@ -20,12 +20,8 @@ export function createCamera(scene: Scene, canvas: HTMLCanvasElement) {
     camera.attachControl(canvas, true);
 
     /* ── 줌 제한 ── */
-    camera.lowerRadiusLimit = 0;
+    camera.lowerRadiusLimit = 1;
     camera.upperRadiusLimit = 300;
-
-    /* ── 수직 회전 제한 ── */
-    camera.lowerBetaLimit = 0.1;
-    camera.upperBetaLimit = Math.PI / 2.2;
 
     /* ── 회전 관성 ── */
     camera.wheelPrecision = 3;

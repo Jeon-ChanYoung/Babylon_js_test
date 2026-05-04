@@ -46,7 +46,7 @@ export function createRoom(scene: Scene, shadowGen: ShadowGenerator) {
         scene
     );
     const floorMat = new StandardMaterial("floorMat", scene);
-    floorMat.diffuseColor  = new Color3(0.62, 0.48, 0.32);  // 기존보다 살짝 어둡게
+    floorMat.diffuseColor  = new Color3(0.5, 0.5, 0.3);  // 기존보다 살짝 어둡게
     floorMat.specularColor = new Color3(0.10, 0.10, 0.10);
 
     const floorTex = new Texture(floorTexturePath, scene);
@@ -63,7 +63,7 @@ export function createRoom(scene: Scene, shadowGen: ShadowGenerator) {
 
     /* 가로벽 (Front/Back)  */
     const wallMatFB = new StandardMaterial("wallMatFB", scene);
-    wallMatFB.diffuseColor  = new Color3(0.22, 0.13, 0.06);  // 짙은 갈색
+    wallMatFB.diffuseColor  = new Color3(0.2, 0.16, 0.05);   // 짙은 갈색
     wallMatFB.specularColor = new Color3(0.05, 0.05, 0.05);
     wallMatFB.backFaceCulling = false;
     const texFB = new Texture(wallTexturePath, scene);
@@ -73,7 +73,7 @@ export function createRoom(scene: Scene, shadowGen: ShadowGenerator) {
 
     /* 세로벽 (Left/Right) 90도 회전  */
     const wallMatLR = new StandardMaterial("wallMatLR", scene);
-    wallMatLR.diffuseColor  = new Color3(0.22, 0.13, 0.06);  // ← wallMatLR로 수정
+    wallMatLR.diffuseColor  = new Color3(0.17, 0.13, 0.06);  // ← wallMatLR로 수정
     wallMatLR.specularColor = new Color3(0.05, 0.05, 0.05);
     wallMatLR.backFaceCulling = false;
     const texLR = new Texture(wallTexturePath, scene);
@@ -86,7 +86,7 @@ export function createRoom(scene: Scene, shadowGen: ShadowGenerator) {
     *  몰딩
     * ═══════════════════════════════════════════ */
     const moldingMat = new StandardMaterial("moldingMat", scene);
-    moldingMat.diffuseColor  = new Color3(0.12, 0.07, 0.03);   // 더 어둡고 중립적인 갈색
+    moldingMat.diffuseColor  = new Color3(0.09, 0.06, 0.03);   // 더 어둡고 중립적인 갈색
     moldingMat.specularColor = new Color3(0.15, 0.10, 0.07);   // specular도 낮춰서 주황기 제거
     moldingMat.specularPower = 48;
     moldingMat.zOffset = -1;
@@ -240,4 +240,7 @@ export function createRoom(scene: Scene, shadowGen: ShadowGenerator) {
         new Vector3(-halfW - frameOuter - BORDER_SIZE / 2, outerY, halfD + frameOuter + BORDER_SIZE / 2), blackMat);
     createFlatBox("blackCornerTR", BORDER_SIZE, 0.5, BORDER_SIZE,
         new Vector3(halfW + frameOuter + BORDER_SIZE / 2, outerY, halfD + frameOuter + BORDER_SIZE / 2), blackMat);
+
+
+
 }

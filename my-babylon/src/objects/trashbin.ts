@@ -1,4 +1,4 @@
-import { Mesh, SceneLoader, Vector3, Scene, ShadowGenerator } from "@babylonjs/core";
+import { Mesh, SceneLoader, Vector3, Scene, ShadowGenerator, Color3, PBRMaterial } from "@babylonjs/core";
 import "@babylonjs/loaders/glTF";
 
 interface Placement {
@@ -24,8 +24,6 @@ export async function createTrashbins(scene: Scene, shadowGen: ShadowGenerator):
     }
 
     const root = cache.trashbin;
-
-    
 
     PLACEMENTS.forEach((cfg, i) => {
         const clone = root.clone(`trashbin_${i}`, null)!;

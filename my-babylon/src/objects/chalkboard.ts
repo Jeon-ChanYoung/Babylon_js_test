@@ -9,10 +9,10 @@ interface Placement {
     scale: number;
 }
 
-const SCALE = 28;
+const SCALE = 70;
 
 const PLACEMENTS: Placement[] = [
-    { x: -2, y: 4, z: 31, rotY: Math.PI, scale: SCALE },
+    { x: -2, y: 8, z: 49, rotY: Math.PI, scale: SCALE },
 ];
 const cache: Record<string, Mesh> = ((window as any).__tmplCache ??= {});
 
@@ -29,7 +29,9 @@ export async function createChalkboards(scene: Scene, shadowGen: ShadowGenerator
     root.getChildMeshes().forEach((child) => {
         const mat = child.material as PBRMaterial;
         if (mat?.albedoColor) {
-            mat.albedoColor = new Color3(0.05, 0.1, 0.05); // 어두운 녹색, 값 조절 가능
+            if (mat.albedoTexture) {
+                mat.albedoTexture.level = 0.7; // 기본 1.0, 낮을수록 어두움
+            }
         }
     });
 

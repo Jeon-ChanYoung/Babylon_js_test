@@ -4,11 +4,11 @@ import { Scene, ArcRotateCamera, DefaultRenderingPipeline } from "@babylonjs/cor
 
 export function createPipeline(scene: Scene, camera: ArcRotateCamera) {
     const pipeline = new DefaultRenderingPipeline("pipeline", true, scene, [camera]);
-    // pipeline.fxaaEnabled            = true;
-    // pipeline.bloomEnabled           = true;
-    // pipeline.bloomThreshold         = 0.85;
-    // pipeline.bloomWeight            = 0.25;
-    // pipeline.bloomKernel            = 64;
+    pipeline.fxaaEnabled            = true;
+    pipeline.bloomEnabled           = true;
+    pipeline.bloomThreshold         = 0.85;
+    pipeline.bloomWeight            = 0.25;
+    pipeline.bloomKernel            = 64;
     // pipeline.sharpenEnabled         = true;
     // pipeline.sharpen.edgeAmount     = 0.7;
     // pipeline.imageProcessing.vignetteEnabled = true;

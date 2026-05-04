@@ -8,6 +8,7 @@ import { createEngine, createScene } from "./core/engine";
 import { createCamera } from "./core/camera";
 import { createLighting } from "./core/lighting";
 import { createPipeline } from "./core/pipeline";
+
 import { createRoom } from "./objects/room";
 import { createChairs } from "./objects/chair";
 import { createCabinets } from "./objects/cabinet";
@@ -23,6 +24,7 @@ import { createBrooms } from "./objects/broom";
 import { createDustpans } from "./objects/dustpan";
 import { createMopsinks } from "./objects/mopsink";
 import { createLamps } from "./objects/lamp";
+import { createCeilingLamps } from "./objects/ceilinglamp";
 
 DracoCompression.Configuration.decoder = {
     wasmUrl: "https://cdn.babylonjs.com/draco_wasm_wrapper_gltf.js",
@@ -43,15 +45,15 @@ if (import.meta.hot?.data?.engine) {
     engine = createEngine(canvas);
     scene = createScene(engine);
     camera = createCamera(scene, canvas);
-    ({ shadowGen } = createLighting(scene));
-    createRoom(scene, shadowGen);
+    ({ shadowGen } = createLighting(scene)),
+    createRoom(scene, shadowGen),
     createPipeline(scene, camera);
     engine.runRenderLoop(() => scene.render());       
     window.addEventListener("resize", () => engine.resize()); 
 }
 
 
-(async () => {
+(async () => { 
     console.time("load");
     await Promise.all([
         createboards(scene, shadowGen),
@@ -68,6 +70,7 @@ if (import.meta.hot?.data?.engine) {
         createDustpans(scene, shadowGen),
         createMopsinks(scene, shadowGen),
         createLamps(scene, shadowGen),
+        createCeilingLamps(scene, shadowGen),
     ]);
     console.timeEnd("load");
 })();

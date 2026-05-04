@@ -21,9 +21,6 @@ interface Placement {
 
 const SCALE = 6;
 
-const PUSH_RADIUS = 3;   // ★ 추가: 밀어내기 감지 반경 (scale 6 기준)
-const PUSH_WEIGHT = 1;   // ★ 추가: 무게 (1=보통, 높을수록 안 밀림)
-
 
 const PLACEMENTS: Placement[] = [
     // 뒷줄 2개 (칠판 쪽 바라봄)

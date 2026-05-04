@@ -3,7 +3,7 @@
 import { Engine, Scene } from "@babylonjs/core";
 
 export function createEngine(canvas: HTMLCanvasElement) {
-    const engine = new Engine(canvas, false, {
+    const engine = new Engine(canvas, true, {
         stencil: false,
     });
 
