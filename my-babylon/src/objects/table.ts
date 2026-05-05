@@ -29,12 +29,17 @@ export async function createTables(scene: Scene, shadowGen: ShadowGenerator): Pr
 
     root.getChildMeshes().forEach((child) => {
         const mat = child.material as PBRMaterial;
-        if (mat?.albedoColor) {
-            mat.albedoColor = new Color3(0.45, 0.4, 0.3);
-        }
-    });
+        if (!mat) return;
 
-    
+        if (mat.albedoTexture) {
+            mat.albedoTexture.level = 1.2;
+        }
+
+        mat.albedoColor = Color3.FromHexString("#878f1f");
+        mat.metallic = 0.0;
+        mat.roughness = 0.9;
+    });
+        
 
     PLACEMENTS.forEach((cfg, i) => {
         const clone = root.clone(`table_${i}`, null)!;

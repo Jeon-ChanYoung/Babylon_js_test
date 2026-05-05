@@ -3,15 +3,16 @@ import "@babylonjs/loaders/glTF";
 
 interface Placement {
     x: number;
+    y: number;
     z: number;
     rotY: number;
     scale: number;
 }
 
-const SCALE = 6;
+const SCALE = 11;
 
 const PLACEMENTS: Placement[] = [
-    { x: 41, z:  30, rotY: Math.PI, scale: SCALE },
+    { x: 41, y: 2.9, z:  33, rotY: Math.PI, scale: SCALE },
 ];
 const cache: Record<string, Mesh> = ((window as any).__tmplCache ??= {});
 
@@ -30,7 +31,7 @@ export async function createTrashbins(scene: Scene, shadowGen: ShadowGenerator):
         clone.setEnabled(true);
         clone.metadata = { hmr: true }; 
 
-        clone.position = new Vector3(cfg.x, 0, cfg.z);
+        clone.position = new Vector3(cfg.x, cfg.y, cfg.z);
         clone.rotation = new Vector3(0, cfg.rotY, 0);
         clone.scaling  = new Vector3(cfg.scale, cfg.scale, cfg.scale);
         

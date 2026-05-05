@@ -46,7 +46,7 @@ export function createRoom(scene: Scene, shadowGen: ShadowGenerator) {
         scene
     );
     const floorMat = new StandardMaterial("floorMat", scene);
-    floorMat.diffuseColor  = new Color3(0.5, 0.5, 0.3);  // 기존보다 살짝 어둡게
+    floorMat.diffuseColor  = Color3.FromHexString("#d4a43d");
     floorMat.specularColor = new Color3(0.10, 0.10, 0.10);
 
     const floorTex = new Texture(floorTexturePath, scene);

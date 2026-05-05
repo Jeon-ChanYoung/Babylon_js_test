@@ -46,7 +46,6 @@ if (import.meta.hot?.data?.engine) {
     scene = createScene(engine);
     camera = createCamera(scene, canvas);
     ({ shadowGen } = createLighting(scene)),
-    createRoom(scene, shadowGen),
     createPipeline(scene, camera);
     engine.runRenderLoop(() => scene.render());       
     window.addEventListener("resize", () => engine.resize()); 
@@ -56,6 +55,7 @@ if (import.meta.hot?.data?.engine) {
 (async () => { 
     console.time("load");
     await Promise.all([
+        createRoom(scene, shadowGen),
         createboards(scene, shadowGen),
         createTables(scene, shadowGen),
         createTrashbins(scene, shadowGen),
@@ -70,7 +70,7 @@ if (import.meta.hot?.data?.engine) {
         createDustpans(scene, shadowGen),
         createMopsinks(scene, shadowGen),
         createLamps(scene, shadowGen),
-        createCeilingLamps(scene, shadowGen),
+        // createCeilingLamps(scene, shadowGen),
     ]);
     console.timeEnd("load");
 })();

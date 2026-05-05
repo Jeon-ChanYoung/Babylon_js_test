@@ -33,19 +33,19 @@ function createFullLighting(scene: Scene) {
 	sun.position  = new Vector3(-15, 5, -10);
 
 	const ambient = new HemisphericLight("ambient", new Vector3(0, 1, 0), scene);
-	ambient.intensity   = 0;
+	ambient.intensity   = 1;
 	ambient.diffuse     = new Color3(0.9, 0.88, 0.82);
 	ambient.groundColor = new Color3(0.5, 0.45, 0.38);
 
-	const shadowGen = new ShadowGenerator(1024, sun);
-	shadowGen.useBlurExponentialShadowMap = true;
-	shadowGen.blurKernel = 48;
-	shadowGen.darkness   = 0.35;
-	shadowGen.bias       = 0.0001;
-	shadowGen.normalBias = 0.008;
+	// const shadowGen = new ShadowGenerator(1024, sun);
+	// shadowGen.useBlurExponentialShadowMap = true;
+	// shadowGen.blurKernel = 48;
+	// shadowGen.darkness   = 0.35;
+	// shadowGen.bias       = 0.0001;
+	// shadowGen.normalBias = 0.008;
 
-	// const shadowGen = new ShadowGenerator(1, sun);  // 최소 해상도
-    // shadowGen.useBlurExponentialShadowMap = false;
+	const shadowGen = new ShadowGenerator(1, sun);  // 최소 해상도
+    shadowGen.useBlurExponentialShadowMap = false;
 
 	return { sun, shadowGen };
 }

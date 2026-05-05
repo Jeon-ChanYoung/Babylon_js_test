@@ -10,16 +10,17 @@ import "@babylonjs/loaders/glTF";
 /* ─── 배치 인터페이스 ─── */
 interface Placement {
     x: number;
+    y: number;
     z: number;
     rotX: number;
     rotY: number;
     scale: number;
 }
 
-const SCALE = 6;
+const SCALE = 12;
 
 const PLACEMENTS: Placement[] = [
-    { x: -33.5,  z:   30, rotX: -Math.PI / 12, rotY:  Math.PI,       scale: SCALE },
+    { x: -31,  y: 1.9, z:   33.7, rotX: -Math.PI / 9, rotY:  Math.PI,       scale: SCALE },
 ];
 const cache: Record<string, Mesh> = ((window as any).__tmplCache ??= {});
 
@@ -37,7 +38,7 @@ export async function createChairfoldeds(scene: Scene, shadowGen: ShadowGenerato
         const clone = root.clone(`chairfolded_${i}`, null)!;
         clone.setEnabled(true);
         clone.metadata = { hmr: true };  
-        clone.position = new Vector3(cfg.x, 0, cfg.z);
+        clone.position = new Vector3(cfg.x, cfg.y, cfg.z);
         clone.rotation = new Vector3(cfg.rotX, cfg.rotY, 0);
         clone.scaling  = new Vector3(cfg.scale, cfg.scale, cfg.scale);
         

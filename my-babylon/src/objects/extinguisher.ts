@@ -11,7 +11,7 @@ interface Placement {
     scale: number;
 }
 
-const SCALE = 8;
+const SCALE = 7;
 
 const PLACEMENTS: Placement[] = [
     { x: 23, y: 3, z: 32, rotY: Math.PI, scale: SCALE },
@@ -30,11 +30,13 @@ export async function createExtinguishers(scene: Scene, shadowGen: ShadowGenerat
 
     root.getChildMeshes().forEach((child) => {
         const mat = child.material as PBRMaterial;
-        if (mat?.albedoColor) {
-            mat.albedoColor = new Color3(0.9, 0.9, 0.9);
-            mat.metallic = 0.9;
-            mat.roughness = 0.5;
+        
+        if (mat.albedoTexture) {
+            mat.albedoTexture.level = 1.5
         }
+        mat.metallic = 0.9;
+        mat.roughness = 0.1;
+        mat.albedoColor = Color3.FromHexString("#ffffff");
     });
 
     PLACEMENTS.forEach((cfg, i) => {
